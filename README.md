@@ -68,3 +68,87 @@ Now, simply export this schema and use it in the `user.controller.js` file.
 ---
 
 4) Create a folder called `controllers`. Inside the `controllers` folder, create a file called `user.controller.js`. Inside this file, require the user schema as `userModel`. Write all the route logic in the controller folder.
+
+Before we start with the route logic, create a folder called `routes`, and inside the `routes` folder, create a file called `user.route.js`. But why do we need this file? Inside this route file, we will create all the route logic for the user. We will export this file and use it. In this file, we will write POST, GET, and DELETE HTTP requests. 
+
+Before writing routes in the `user.route.js` file, think about it for a moment— we also need an authenticator to check if the route is valid or not. To do this, we will use the `express-validator` package. First, install the `express-validator` package by running `npm install express-validator --save`. Now, inside the `user.route.js` file, require `express`, `Router` from `express.Router`, and `body` from `express-validator`.
+
+I know you might not be familiar with `express-validator`, so let me explain it in simple terms. `express-validator` is a package that helps you validate the data coming from the request body. It checks if the data is valid or not. For example, if you are creating a user and sending the request body with name, email, and password, `express-validator` will help you check that the name is not empty.
+
+Now, create a POST request to register the user, which should look like this:
+
+```javascript
+router.post('/register', [
+    body('email').isEmail().withMessage("Invalid Email"),
+    body('fullname.firstname').isLength({min: 3}).withMessage("First name should be at least 3 characters long"),
+], userController.registerUser);
+```
+
+Now, you might be wondering, what is `userController.registerUser`? This is the function that will handle the POST request. Let me explain it simply: when you make a POST request to the `/register` route, `express-validator` will check the data coming from the request body. If the data is valid, it will call the `registerUser` function. If the data is not valid, it will return an error message.
+
+Before moving to the `user.controller.js` file, remember to `module.exports = router;` at the end of the `user.route.js` file.
+
+Now, create a folder called `services` and create a file named `user.service.js`. Inside this file, we will write all the logic to handle user data.
+
+I know it may seem a bit confusing, but don’t worry, I’ll explain it in simple terms.
+
+Here is the logic for `user.service.js`:
+
+```javascript
+const userModel = require("../models/user.model");
+
+module.exports.createUser = async ({ firstname, lastname, email, password }) => {
+  if (!firstname || !email || !password) {
+    return { error: "Please fill all the fields" };
+  }
+
+  const user = new userModel({
+    fullname: {
+      firstname: firstname,
+      lastname: lastname,
+    },
+    email,
+    password,
+  });
+
+  return user;
+};
+```
+
+Here is the logic for the `user.route.js` file:
+
+```javascript
+const express = require('express');
+const router  = express.Router();
+const { body } = require('express-validator');
+const userController = require('../controllers/user.controller');
+
+router.post('/register', [
+    body('email').isEmail().withMessage("Invalid Email"),
+    body('fullname.firstname').isLength({ min: 3 }).withMessage("First name should be at least 3 characters long"),
+], userController.registerUser);
+
+module.exports = router;
+```
+
+Finally, in the `user.controller.js` file:
+
+```javascript
+const userModel = require('../models/user.model');
+
+module.exports.registerUser = async (req, res, next) => {
+  // Here we write the logic to handle the user data
+};
+```
+The provided code includes functions and routes related to user registration in an Express application, with validation and user creation logic.
+
+The first function, `createUser`, is responsible for creating a new user object. It accepts an object containing `firstname`, `lastname`, `email`, and `password`. It performs a check to ensure that the `firstname`, `email`, and `password` fields are not empty, returning an error message if any of these required fields are missing. If all the required fields are provided, the function creates a new user object using the `userModel` (presumably a Mongoose model), which structures the user's full name under `fullname` with the `firstname` and `lastname`. The `email` and `password` are directly assigned. Once the user object is created, it is returned.
+
+The second part is the Express route handler that sets up a POST endpoint at `/register` for user registration. The route includes validation checks using the `express-validator` library. Specifically, it validates that the `email` is a valid email address and that the `firstname` is at least three characters long. If the data doesn't pass these checks, error messages are returned. After successful validation, the `registerUser` controller function is invoked to handle the registration process.
+
+The `registerUser` function is defined in the `user.controller.js` file but is currently empty. Typically, this function would handle the logic of checking for any validation errors, calling the `createUser` function to create a user object, saving that object to the database, and returning an appropriate response to the client (such as a success message or an error response if something goes wrong). It takes three parameters: `req` (the request object containing data from the client), `res` (the response object used to send a response back to the client), and `next` (which passes control to the next middleware if needed).
+
+In summary, the `createUser` function handles the logic for creating a new user object, the router handles POST requests to `/register` with validation, and the `registerUser` controller function is meant to process the registration by saving the user to the database and sending a response, though its logic is not yet implemented.
+
+Note: Yes You have to Pratice this formate because this is the standard way to write code:
+
